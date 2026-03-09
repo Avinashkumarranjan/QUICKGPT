@@ -8,11 +8,11 @@ const Loading = () =>{
     useEffect(()=>{
        const timeout = setTimeout(()=>{
          navigate("/")
-       },8000) 
+       },3000) 
        return()=> clearTimeout(timeout)
     },[navigate]);
     return (
-        <div className="bg-gradient-to-b form-[#531B81] to-[#29184B] backdrop-opacity-60 flex items-center justify-center h-screen w-screen">
+        <div className="bg-gradient-to-b from-[#531B81] to-[#29184B] backdrop-opacity-60 flex items-center justify-center h-screen w-screen">
            <div className="w-10 h-10 rounded-full border-4 border-white 
             border-t-transparent animate-spin">
 

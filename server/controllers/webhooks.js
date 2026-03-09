@@ -16,30 +16,29 @@ export const stripeWebhooks = async (request, response)=>{
     }
     try {
         switch (event.type) {
-            case "payment_intent.succeeded":
-                console.log("Payment Intent Succeeded:", event.data.object);
-                const sessionList = await stripe.checkout.sessions.list({
-                    payment_intent: paymentIntent.id,
-                   
-                }); 
-                const session = sessionList.data[0];
-                const {transactionId, appId} = session.metadata;
+            case "checkout.session.completed": {
+                const session = event.data.object;
+                const { transactionId, appId } = session.metadata || {};
                 
-                if(appId === "quickgpt"){
+                if (appId === "quickgpt" && transactionId) {
                     // Update transaction in database
-                    const transaction = await Transaction.findOne({_id:transactionId, isPaid: false})
+                    const transaction = await Transaction.findOne({ _id: transactionId, isPaid: false })
+                    if (!transaction) {
+                        return response.json({ received: true, message: "Transaction already processed or missing" })
+                    }
 
                     // Update credits is user account
-                    await User.updateOne({_id: transaction.userId}, {$inc: {credits: transaction.credits}})
+                    await User.updateOne({ _id: transaction.userId }, { $inc: { credits: transaction.credits } })
                     
                     // Update credit payment status
                     transaction.isPaid = true;
                     await transaction.save();
 
-                }else{
-                    return response.json({recieved: true, message:"Ignored event: Invalid app"})
+                } else {
+                    return response.json({ received: true, message: "Ignored event: Invalid metadata/app" })
                 }
                 break;
+            }
         
             default:
                 console.log(`Unhandled event type ${event.type}`);

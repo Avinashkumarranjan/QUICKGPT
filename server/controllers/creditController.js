@@ -57,7 +57,10 @@ export const purchasePlan = async (req, res) =>{
              isPaid: false
         })
         // Create Stripe checkout session
-        const origin = req.headers.origin || `${req.protocol}://${req.get("host")}`
+        const clientBaseUrl =
+            process.env.CLIENT_URL ||
+            req.headers.origin ||
+            "http://localhost:5173"
 
         const session = await stripe.checkout.sessions.create({
             line_items:[
@@ -73,8 +76,8 @@ export const purchasePlan = async (req, res) =>{
                 },
             ],
             mode: "payment",
-            success_url:`${origin}/loading`,
-            cancel_url:`${origin}`,
+            success_url:`${clientBaseUrl}/loading?checkout=success&session_id={CHECKOUT_SESSION_ID}`,
+            cancel_url:`${clientBaseUrl}/credits?checkout=cancelled`,
             metadata: {
                 transactionId: transaction._id.toString(),
                 appId: "quickgpt",

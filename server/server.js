@@ -9,6 +9,7 @@ import creditRouter from "./routes/creditRoutes.js"
 import { stripeWebhooks } from "./controllers/webhooks.js"
 
 const app = express()
+const CLIENT_URL = process.env.CLIENT_URL || "http://localhost:5173"
 
 await connectDB()
 
@@ -26,6 +27,12 @@ app.use("/api/user",userRouter)
 app.use("/api/chat",chatRouter)
 app.use("/api/message",messageRouter)
 app.use("/api/credit", creditRouter)
+
+// Redirect frontend routes to the client dev server when backend port is accessed directly.
+app.get(/^\/(?!api\/).+/, (req, res) => {
+    return res.redirect(`${CLIENT_URL}${req.originalUrl}`)
+})
+
 const PORT = process.env.PORT || 3000
 
 app.listen(PORT,()=>{
