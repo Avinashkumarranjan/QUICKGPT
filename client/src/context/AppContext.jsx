@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import toast from "react-hot-toast";
 
-axios.defaults.baseURL = "https://quickgptserver-eosin.vercel.app"; // ✅ Vercel URL
+axios.defaults.baseURL = "https://quickgptserver-eosin.vercel.app";
 
 const AppContext = createContext();
 
@@ -20,7 +20,7 @@ export const AppContextProvider = ({ children }) => {
     const fetchUser = async () => {
         try {
             const { data } = await axios.get("/api/user/data", {
-                headers: { Authorization: token }
+                headers: { Authorization: `Bearer ${token}` } // ✅ fix
             })
             if (data.success) {
                 setUser(data.user)
@@ -46,13 +46,13 @@ export const AppContextProvider = ({ children }) => {
     const fetchUsersChats = async () => {
         try {
             const { data } = await axios.get("/api/chat/get", {
-                headers: { Authorization: token }
+                headers: { Authorization: `Bearer ${token}` } // ✅ fix
             })
             if (data.success) {
                 setChats(data.chats)
                 if (data.chats.length === 0) {
                     await axios.post("/api/chat/create", {}, {
-                        headers: { Authorization: token }
+                        headers: { Authorization: `Bearer ${token}` } // ✅ fix
                     })
                     await fetchUsersChats()
                 } else {
@@ -71,7 +71,7 @@ export const AppContextProvider = ({ children }) => {
             if (!user) return toast("Please login to create a chat")
             navigate("/")
             await axios.post("/api/chat/create", {}, {
-                headers: { Authorization: token }
+                headers: { Authorization: `Bearer ${token}` } // ✅ fix
             })
             await fetchUsersChats();
         } catch (error) {
