@@ -6,14 +6,12 @@ const Credits = () => {
   const [Plans, setPlans] = useState([])
   const [loading, setLoading] = useState(true)
   
-  const fetchPlans = async() => {
+  /* eslint-disable react-hooks/set-state-in-effect */
+  useEffect(() => {
     setPlans(dummyPlans)
     setLoading(false)
-  }
-
-  useEffect(() => {
-    fetchPlans()
   }, [])
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   if(loading) return <Loading/>
 

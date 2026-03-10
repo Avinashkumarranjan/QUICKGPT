@@ -9,7 +9,7 @@ const ChatBox = () => {
    
   const { selectedChat, theme } = useAppContext();
   const [messages, setMessages] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [loading] = useState(false);
   const [prompt, setPrompt] = useState("");
   const [mode, setMode] = useState("text");
   const [isPublished, setIsPublished]= useState(false)
@@ -21,11 +21,7 @@ const ChatBox = () => {
   // loading state add kiya
   const messagesEndRef = useRef(null);
 
-  // Auto-scroll to bottom when new messages arrive
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
-
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     console.log("selectedChat:", selectedChat);
     if (selectedChat && selectedChat.messages && Array.isArray(selectedChat.messages)) {
@@ -36,6 +32,7 @@ const ChatBox = () => {
       setMessages([]);
     }
   }, [selectedChat]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   useEffect(() => {
     if(containerRef.current){

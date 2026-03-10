@@ -9,27 +9,27 @@ import { useAppContext } from './context/AppContext'
 import "./assets/prism.css"
 import Loading from './pages/loading'
 import Login from './pages/login'
+import { Toaster } from 'react-hot-toast'
 
 const App = () => {
-  const { user, theme } = useAppContext()
+  const { user, theme, loadingUser } = useAppContext()
   const [isMenuOpen, setIsMenuOpen] = useState(false)
-
   const { pathname } = useLocation()
 
-  if (pathname === "/loading") return <Loading />
+  if (pathname === "/loading" || loadingUser) return <Loading />
 
-  // ✅ User nahi hai toh sirf Login page dikhao — koi extra wrapper nahi
   if (!user) {
     return (
       <div className='bg-gradient-to-b from-[#242124] to-[#000000] flex items-center justify-center min-h-screen w-screen'>
+        <Toaster />
         <Login />
       </div>
     )
   }
 
-  // ✅ Menu icon sirf logged-in state mein dikhao
   return (
     <div className={`min-h-screen w-full ${theme === 'dark' ? 'bg-gradient-to-b from-[#242124] to-[#000000] text-white' : 'bg-gradient-to-b from-[#f5f5f5] to-[#ffffff] text-black'} transition-all duration-500`}>
+      <Toaster />
       {!isMenuOpen && (
         <img
           src={assets.menu_icon}

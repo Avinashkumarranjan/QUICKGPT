@@ -6,14 +6,12 @@ const Community = () => {
   const [Images, setImages] = useState([])
   const [loading, setLoading] = useState(true)
 
-  const fetchImages = async () => {
+  /* eslint-disable react-hooks/set-state-in-effect */
+  useEffect(() => {
     setImages(dummyPublishedImages)
     setLoading(false)
-  }
-
-  useEffect(() => {
-    fetchImages()
   }, [])
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   if(loading) return <Loading/>
 

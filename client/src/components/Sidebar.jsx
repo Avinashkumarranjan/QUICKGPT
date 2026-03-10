@@ -4,7 +4,7 @@ import {assets} from "../assets/assets"
 import moment from "moment";
 
 const Sidebar = ({isMenuOpen, setIsMenuOpen}) => {
-  const {chats, setSelectedChat, theme, setTheme, navigate, user,} = useAppContext();
+  const {chats, setSelectedChat, theme, setTheme, navigate, user, logout} = useAppContext();
   const [search, setSearch] = useState('');
 
   return (
@@ -151,6 +151,7 @@ const Sidebar = ({isMenuOpen, setIsMenuOpen}) => {
 
         {/* User Account */}
         <div  
+          onClick={user ? logout : undefined}
           className={`flex items-center gap-3 p-3 border rounded-md cursor-pointer group transition-all ${
             theme === 'dark'
               ? 'border-white/15 hover:bg-[#57317C]/10'
@@ -161,7 +162,7 @@ const Sidebar = ({isMenuOpen, setIsMenuOpen}) => {
           <p className={`flex-1 text-sm truncate ${theme === 'dark' ? 'text-primary' : 'text-gray-800'}`}>
             {user ? user.name : "Login your account"}
           </p>
-          {user && <img src={assets.logout_icon} className={`w-5 h-5 hidden group-hover:block flex-shrink-0 ${theme === 'light' ? 'invert' : ''}`} alt="logout"/>}
+          {user && <img src={assets.logout_icon} className={`w-5 h-5 block flex-shrink-0 ${theme === 'light' ? 'invert' : ''}`} alt="logout"/>}
         </div>
       </div>
 
