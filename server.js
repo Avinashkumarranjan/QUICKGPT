@@ -18,7 +18,7 @@ app.post("/api/stripe", express.raw({type: "application/json"}), stripeWebhooks)
 
 // Middleware
 app.use(cors({
-  origin: "*",
+  origin: ["http://localhost:5173", "https://quickgptserver-eosin.vercel.app"],
   credentials: true
 }))
 app.use(express.json())
