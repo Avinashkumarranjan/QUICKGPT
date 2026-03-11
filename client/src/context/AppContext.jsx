@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import toast from "react-hot-toast";
 
-axios.defaults.baseURL = "https://quickgptserver-eosin.vercel.app";
+axios.defaults.baseURL = "https://quickgpt-server-theta.vercel.app";
 
 const AppContext = createContext();
 
