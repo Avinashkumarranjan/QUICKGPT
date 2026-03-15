@@ -1,5 +1,6 @@
 import Transaction from "../models/Transaction.js"  
 import Stripe from "stripe"
+import User from "../models/User.js"
 
 
 const plans = [
@@ -37,6 +38,9 @@ export const getPlans = async (req,res)=>{
     }
 }
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY)    
+
+const normalizeBaseUrl = (value) => (value || "").trim().replace(/\/+$/, "");
+
 // API controller for purchasing a plan
 export const purchasePlan = async (req, res) =>{
  try {
@@ -59,9 +63,16 @@ export const purchasePlan = async (req, res) =>{
         // Create Stripe checkout session
         const forwardedProto = req.headers["x-forwarded-proto"]?.split(",")[0]
         const protocol = forwardedProto || req.protocol
-        const backendBaseUrl =
-            process.env.SERVER_URL ||
-            `${protocol}://${req.get("host")}`
+        const hostBaseUrl = normalizeBaseUrl(`${protocol}://${req.get("host")}`)
+
+        const clientBaseUrl =
+            normalizeBaseUrl(process.env.CLIENT_URL) ||
+            normalizeBaseUrl(req.headers.origin) ||
+            hostBaseUrl
+
+        if (!clientBaseUrl) {
+            return res.json({ success: false, message: "CLIENT_URL is not configured" })
+        }
 
         const session = await stripe.checkout.sessions.create({
             line_items:[
@@ -77,8 +88,8 @@ export const purchasePlan = async (req, res) =>{
                 },
             ],
             mode: "payment",
-            success_url:`${backendBaseUrl}/loading?checkout=success&session_id={CHECKOUT_SESSION_ID}`,
-            cancel_url:`${backendBaseUrl}/payment-cancelled`,
+            success_url:`${clientBaseUrl}/loading?checkout=success&session_id={CHECKOUT_SESSION_ID}`,
+            cancel_url:`${clientBaseUrl}/credits?checkout=cancelled`,
             metadata: {
                 transactionId: transaction._id.toString(),
                 appId: "quickgpt",
@@ -94,5 +105,44 @@ export const purchasePlan = async (req, res) =>{
 
     }
 
+}
+
+export const verifyCheckoutSession = async (req, res) => {
+    try {
+        const sessionId = req.query?.session_id
+        if (!sessionId) {
+            return res.json({ success: false, message: "session_id is required" })
+        }
+
+        const session = await stripe.checkout.sessions.retrieve(sessionId)
+        const { transactionId, appId } = session?.metadata || {}
+
+        if (appId !== "quickgpt" || !transactionId) {
+            return res.json({ success: false, message: "Invalid session metadata" })
+        }
+
+        const transaction = await Transaction.findOne({ _id: transactionId })
+        if (!transaction) {
+            return res.json({ success: false, message: "Transaction not found" })
+        }
+
+        if (String(transaction.userId) !== String(req.user?._id)) {
+            return res.status(403).json({ success: false, message: "Not allowed" })
+        }
+
+        if (!transaction.isPaid) {
+            if (session.payment_status !== "paid") {
+                return res.json({ success: false, message: "Payment not completed" })
+            }
+
+            await User.updateOne({ _id: transaction.userId }, { $inc: { credits: transaction.credits } })
+            transaction.isPaid = true
+            await transaction.save()
+        }
+
+        return res.json({ success: true })
+    } catch (error) {
+        return res.json({ success: false, message: error.message })
+    }
 }
 

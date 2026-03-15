@@ -1,17 +1,43 @@
 import React, { useEffect, useState } from 'react'
 import { dummyPlans } from '../assets/assets'
 import Loading from './loading'
+import toast from 'react-hot-toast'
+import { useAppContext } from '../context/AppContext'
 
 const Credits = () => {
   const [Plans, setPlans] = useState([])
   const [loading, setLoading] = useState(true)
+  const {token, axios} = useAppContext()
   
-  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
-    setPlans(dummyPlans)
-    setLoading(false)
-  }, [])
-  /* eslint-enable react-hooks/set-state-in-effect */
+    const fetchPlans = async () => {
+      try {
+        const { data } = await axios.get("/api/credit/plan")
+        if (data?.success) setPlans(data.plans || [])
+        else setPlans(dummyPlans)
+      } catch {
+        setPlans(dummyPlans)
+      }
+      setLoading(false)
+    }
+
+    fetchPlans()
+  }, [axios])
+
+  const purchasePlan = async (planId) => {
+    if (!token) throw new Error("Please login to purchase credits")
+
+    const { data } = await axios.post(
+      "/api/credit/purchase",
+      { planId },
+      { headers: { Authorization: `Bearer ${token}` } }
+    )
+
+    if (!data?.success) throw new Error(data?.message || "Failed to initiate purchase")
+    if (!data?.url) throw new Error("Payment URL missing from server response")
+
+    window.location.assign(data.url)
+  }
 
   if(loading) return <Loading/>
 
@@ -50,7 +76,16 @@ const Credits = () => {
               ))}
             </ul>
 
-            <button className='mt-6 w-full bg-purple-600 hover:bg-purple-700 active:bg-purple-800 text-white font-medium py-2.5 rounded-full transition-colors cursor-pointer whitespace-nowrap'>
+            <button
+              onClick={() =>
+                toast.promise(purchasePlan(plan._id), {
+                  loading: "Processing...",
+                  success: "Redirecting to payment...",
+                  error: (err) => err?.message || "Purchase failed",
+                })
+              }
+              className='mt-6 w-full bg-purple-600 hover:bg-purple-700 active:bg-purple-800 text-white font-medium py-2.5 rounded-full transition-colors cursor-pointer whitespace-nowrap'
+            >
               Buy Now
             </button>
           </div>

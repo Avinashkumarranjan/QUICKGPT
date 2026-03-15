@@ -1,12 +1,36 @@
-import React, {useState} from 'react'
+import {useState} from 'react'
 import { useAppContext } from '../context/AppContext'
 import {assets} from "../assets/assets"
 import moment from "moment";
+import toast from 'react-hot-toast';
+import Brand from "./Brand";
 
 const Sidebar = ({isMenuOpen, setIsMenuOpen}) => {
-  const {chats, setSelectedChat, theme, setTheme, navigate, user, logout} = useAppContext();
+  const { chats, setChats, setSelectedChat, theme, setTheme, navigate, user, createNewChat, axios, fetchUsersChats, setToken, token } = useAppContext();
   const [search, setSearch] = useState('');
+  
+  const logout = ()=>{
+       localStorage.removeItem("token")
+       setToken(null)
+       toast.success("Logged out successfully")
+     
+  }
 
+  const deleteChat = async (e, chatId) =>{
+    try {
+      e.stopPropagation();
+      const confirm = window.confirm("Are you sure want to delete this chat?");
+      if (!confirm) return;
+          const { data } = await axios.delete(`/api/chat/delete/${chatId}`, { headers: { Authorization: `Bearer ${token}` } });
+      if (data.success) {
+        await fetchUsersChats();
+        setSelectedChat(prev => (prev && prev._id === chatId ? null : prev));
+        toast.success("Chat deleted successfully");
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.message || error.message);
+    }
+  }
   return (
     <div className={`flex flex-col h-screen min-w-72 p-4 transition-all duration-500 max-md:absolute left-0 z-10 border-r
     ${theme === 'dark' 
@@ -14,11 +38,10 @@ const Sidebar = ({isMenuOpen, setIsMenuOpen}) => {
       : 'bg-white border-gray-200 text-black'} ${!isMenuOpen && 'max-md:-translate-x-full'}`}>
       
       {/* Logo */}
-      <img src={theme === 'dark' ? assets.logo_full : assets.logo_full_dark} alt="Logo"
-      className='w-full max-w-40 mb-4'/>
+        <Brand theme={theme} size="sm" className="mb-4" />
 
       {/* New Chat Button */}
-        <button onClick={() => {setSelectedChat(null); setSearch('')}} 
+        <button onClick={createNewChat} 
         className='flex justify-center items-center w-full py-2
         text-white bg-gradient-to-r from-[#8037ce] to-[#3D81F6] text-xs font-medium rounded-md
         cursor-pointer hover:opacity-90 transition-all active:scale-95'>
@@ -86,7 +109,7 @@ const Sidebar = ({isMenuOpen, setIsMenuOpen}) => {
                   className={`hidden group-hover:block w-3.5 h-3.5 flex-shrink-0 ml-2 ${
                     theme === 'light' ? 'invert opacity-60' : 'opacity-70'
                   }`} 
-                  alt="delete"
+                  alt="delete" onClick={(e) => deleteChat(e, chat._id)}
                 />
               </div>
             ))
@@ -162,7 +185,7 @@ const Sidebar = ({isMenuOpen, setIsMenuOpen}) => {
           <p className={`flex-1 text-sm truncate ${theme === 'dark' ? 'text-primary' : 'text-gray-800'}`}>
             {user ? user.name : "Login your account"}
           </p>
-          {user && <img src={assets.logout_icon} className={`w-5 h-5 block flex-shrink-0 ${theme === 'light' ? 'invert' : ''}`} alt="logout"/>}
+          {user && <img onClick={logout} src={assets.logout_icon} className={`w-5 h-5 block flex-shrink-0 ${theme === 'light' ? 'invert' : ''}`} alt="logout"/>}
         </div>
       </div>
 

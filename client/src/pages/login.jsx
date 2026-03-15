@@ -23,14 +23,18 @@ const Login = () => {
         toast.error(data.message); // ✅ react-hot-toast
       }
     } catch (error) {
-      toast.error(error.response?.data?.message || error.message);
+      if (!error?.response) {
+        toast.error("Backend not reachable. Start it (QUICKGPT/start-backend.cmd) on http://localhost:3000.");
+      } else {
+        toast.error(error.response?.data?.message || error.message);
+      }
     }
   };
 
   return (
     <form
       onSubmit={handleSubmit}
-      className="flex flex-col gap-4 m-auto items-start p-8 py-12 w-80 sm:w-[352px] text-gray-500 rounded-lg shadow-xl border border-gray-200 bg-white"
+      className="flex flex-col gap-4 m-auto items-start p-8 py-12 w-80 sm:w-88 text-gray-500 rounded-lg shadow-xl border border-gray-200 bg-white"
     >
       <p className="text-2xl font-medium m-auto">
         <span className="text-purple-700">User</span>{" "}

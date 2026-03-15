@@ -20,7 +20,7 @@ const App = () => {
 
   if (!user) {
     return (
-      <div className='bg-gradient-to-b from-[#242124] to-[#000000] flex items-center justify-center min-h-screen w-screen'>
+      <div className='bg-linear-to-b from-[#242124] to-[#000000] flex items-center justify-center min-h-screen w-screen'>
         <Toaster />
         <Login />
       </div>
@@ -28,7 +28,7 @@ const App = () => {
   }
 
   return (
-    <div className={`min-h-screen w-full ${theme === 'dark' ? 'bg-gradient-to-b from-[#242124] to-[#000000] text-white' : 'bg-gradient-to-b from-[#f5f5f5] to-[#ffffff] text-black'} transition-all duration-500`}>
+    <div className={`min-h-screen w-full ${theme === 'dark' ? 'bg-linear-to-b from-[#242124] to-[#000000] text-white' : 'bg-linear-to-b from-[#f5f5f5] to-[#ffffff] text-black'} transition-all duration-500`}>
       <Toaster />
       {!isMenuOpen && (
         <img

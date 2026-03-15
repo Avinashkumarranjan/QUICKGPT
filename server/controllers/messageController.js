@@ -4,6 +4,12 @@ import User from "../models/User.js"
 import imagekit from "../configs/imageKit.js"
 import openai from "../configs/openai.js"
  
+const ensureHttpUrl = (value) => {
+    if (!value) return value;
+    if (value.startsWith("data:")) return value;
+    if (/^https?:\/\//i.test(value)) return value;
+    return `https://${value.replace(/^\/\//, "")}`;
+};
 
 //Text-based AI Chat Message Controller
 export const textMessageController = async(req,res)=>{
@@ -62,7 +68,11 @@ export const imageMessageController = async(req,res)=>{
         const encodedPrompt = encodeURIComponent(prompt)
 
         // Construct ImageKit Ai genration URl
-        const genratedImageUrl = `${process.env.IMAGEKIT_URL_ENDPOINT}/ik-genimg-prompt-${encodedPrompt}/quickgpt/${Date.now()}.png?tr=w-800,h-800`;
+        const imagekitEndpoint = ensureHttpUrl(process.env.IMAGEKIT_URL_ENDPOINT || "").replace(/\/+$/, "");
+        if (!imagekitEndpoint) {
+            throw new Error("IMAGEKIT_URL_ENDPOINT is not set");
+        }
+        const genratedImageUrl = `${imagekitEndpoint}/ik-genimg-prompt-${encodedPrompt}/quickgpt/${Date.now()}.png?tr=w-800,h-800`;
         // Trigger genration by fetching from Imagekit
         const  aiImageResponse = await axios.get(genratedImageUrl,{responseType:"arraybuffer"})
 
@@ -80,7 +90,7 @@ export const imageMessageController = async(req,res)=>{
         })
         const reply = {
             role:"assistant",
-            content: uploadResponse.url,
+            content: ensureHttpUrl(uploadResponse.url),
             timestamp: Date.now(), 
             isImage: true,
             isPublished: publishFlag

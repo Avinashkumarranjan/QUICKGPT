@@ -2,26 +2,59 @@ import { useState, useEffect, useRef } from 'react'
 import { useAppContext } from '../context/AppContext'
 import { assets } from '../assets/assets';
 import Message from './Message';
+import Brand from './Brand';
+import toast from 'react-hot-toast';
 
 const ChatBox = () => {
   
   const containerRef = useRef(null);
    
-  const { selectedChat, theme } = useAppContext();
+  const { selectedChat, theme, user, axios, token, setUser} = useAppContext();
   const [messages, setMessages] = useState([]);
-  const [loading] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [prompt, setPrompt] = useState("");
   const [mode, setMode] = useState("text");
   const [isPublished, setIsPublished]= useState(false)
 
   const onSubmit = async(e)=>{
-    e.preventDefault()
+  
+    try {
+       e.preventDefault()
+       if(!user) return toast("Login to send message")
+       if (!selectedChat?._id) return toast.error("Please select a chat first")
+       const promptCopy = prompt.trim();
+       if (!promptCopy) return;
+       setLoading(true)
+       setPrompt("")
+      setMessages(prev => [...prev, { role: "user", content: promptCopy, timestamp:Date.now(), isImage: false}])
+      const {data} = await axios.post(`/api/message/${mode}`, {
+        chatId: selectedChat._id,
+        prompt: promptCopy,
+        isPublished
+      },{headers: {Authorization: `Bearer ${token}`}})
+
+      if(data.success){
+        setMessages(prev => [...prev, data.reply])
+        // decrease credits
+        if(mode === "image"){
+          setUser(prev => ({...prev, credits: prev.credits -2}))
+        }else{
+          setUser(prev => ({...prev, credits: prev.credits -1}))
+        }
+      }else{
+        toast.error(data.message)
+      }
+    } catch (error) {
+      toast.error(error.message)
+    }finally{
+      setPrompt("")
+      setLoading(false)
+    }
   }
 
   // loading state add kiya
   const messagesEndRef = useRef(null);
 
-  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     console.log("selectedChat:", selectedChat);
     if (selectedChat && selectedChat.messages && Array.isArray(selectedChat.messages)) {
@@ -32,7 +65,6 @@ const ChatBox = () => {
       setMessages([]);
     }
   }, [selectedChat]);
-  /* eslint-enable react-hooks/set-state-in-effect */
 
   useEffect(() => {
     if(containerRef.current){
@@ -50,11 +82,7 @@ const ChatBox = () => {
       <div ref={containerRef} className='flex-1 mb-5 overflow-y-auto overflow-x-hidden'>
         {messages.length === 0 ? (
           <div className='h-full flex flex-col items-center justify-center gap-2 text-primary px-4'>
-            <img
-              src={theme === "dark" ? assets.logo_full : assets.logo_full_dark}
-              alt="Logo"
-              className='w-full max-w-56 sm:max-w-68'
-            />
+            <Brand theme={theme} size="lg" centered />
             <p className='mt-5 text-4xl sm:text-6xl text-center text-gray-400 dark:text-white'>
               Ask me Anything.
             </p>
@@ -94,7 +122,7 @@ const ChatBox = () => {
         </select>
         <input onChange={(e)=>setPrompt(e.target.value)} value={prompt} type="text" placeholder='Type your prompt here...' className='flex-1 w-full text-sm
          outline-none' required />
-         <button>
+         <button type="submit" aria-label="Send">
           <img src={loading ? assets.stop_icon : assets.send_icon } className='w-8
             cursor-pointer' alt="" />
          </button>

@@ -1,17 +1,51 @@
 import React, { useEffect, useState } from 'react'
-import { dummyPublishedImages } from '../assets/assets'
+import { assets } from '../assets/assets'
+import { useAppContext } from '../context/AppContext'
 import Loading from './loading'
+import toast from 'react-hot-toast'
+
+const normalizeImageUrl = (value) => {
+  if (!value) return value
+  if (value.startsWith('data:')) return value
+  if (/^https?:\/\//i.test(value)) return value
+  return `https://${value.replace(/^\/\//, '')}`
+}
 
 const Community = () => {
+  const { axios } = useAppContext()
   const [Images, setImages] = useState([])
   const [loading, setLoading] = useState(true)
+ 
 
-  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
-    setImages(dummyPublishedImages)
-    setLoading(false)
-  }, [])
-  /* eslint-enable react-hooks/set-state-in-effect */
+    const fetchPublishedImages = async () => {
+      try {
+        setLoading(true)
+        const { data } = await axios.get('/api/user/published-images')
+
+        if (!data?.success) {
+          setImages([])
+          return toast.error(data?.message || 'Failed to load community images')
+        }
+
+        const normalized = (data.images || [])
+          .map((item) => ({
+            imageUrl: item?.imageUrl || item?.content || item?.url,
+            userName: item?.userName || item?.name || 'Unknown',
+          }))
+          .filter((item) => Boolean(item.imageUrl))
+
+        setImages(normalized)
+      } catch (error) {
+        setImages([])
+        toast.error(error?.response?.data?.message || error.message)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchPublishedImages()
+  }, [axios])
 
   if(loading) return <Loading/>
 
@@ -26,14 +60,19 @@ const Community = () => {
           {Images.map((item, index) => (
             <a 
               key={index} 
-              href={item.imageUrl} 
+              href={normalizeImageUrl(item.imageUrl)} 
               target="_blank" 
               rel="noopener noreferrer"
               className='relative group block rounded-lg overflow-hidden border border-gray-200 dark:border-purple-700 shadow-sm hover:shadow-md transition-shadow duration-300'
             >
               <img 
-                src={item.imageUrl} 
+                src={normalizeImageUrl(item.imageUrl)} 
                 alt={`Created by ${item.userName}`}
+                onError={(e) => {
+                  if (e.currentTarget.src !== assets.mountain_img) {
+                    e.currentTarget.src = assets.mountain_img
+                  }
+                }}
                 className='w-full h-60 md:h-60 2xl:h-64 object-cover group-hover:scale-105 transition-transform duration-300 ease-in-out' 
               />
               <p className='absolute bottom-0 right-0 text-xs bg-black/50 backdrop-blur text-white px-4 py-1 rounded-tl-xl opacity-0 group-hover:opacity-100 transition duration-300'>
