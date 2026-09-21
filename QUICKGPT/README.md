@@ -87,7 +87,7 @@ Notes:
 Create `QUICKGPT/client/.env`:
 
 ```bash
-VITE_SERVER_URL=http://localhost:3000
+VITE_API_URL=http://localhost:3000
 ```
 
 ## Local Setup (Windows)
@@ -162,12 +162,13 @@ Authorization: Bearer <JWT_TOKEN>
 - Frontend has `client/vercel.json` rewrites for SPA routes.
 - In production, set:
   - `CLIENT_URL` = your deployed frontend URL
-  - `VITE_SERVER_URL` = your deployed backend URL
+  - `VITE_API_URL` = your deployed backend URL
   - Stripe webhook secret generated for your production endpoint
+- For a Render Static Site using React Router, add the SPA rewrite: `/*` to `/index.html`.
 
 ## Troubleshooting
 
-- "Backend not reachable" on login page: confirm backend is running on port 3000 (see `DEV.md`).
+- "Unable to connect to the server": verify the frontend's `VITE_API_URL` points to the deployed backend.
 - Mongo error "MONGODB_URI is not set": add `MONGODB_URI` in `server/.env`.
 - AI errors: ensure `GEMINI_API_KEY` is set (see `server/configs/openai.js`).
 - Image generation fails: ensure ImageKit env vars are correct.

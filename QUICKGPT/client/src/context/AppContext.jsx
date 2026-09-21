@@ -4,26 +4,11 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import toast from "react-hot-toast";
 
-const resolveApiBaseUrl = () => {
-    const configured = String(import.meta.env.VITE_SERVER_URL || "").trim();
-    if (configured) {
-        // Prevent production builds from accidentally hardcoding localhost.
-        if (import.meta.env.PROD && /^(https?:\/\/)?(localhost|127\.0\.0\.1)(:\d+)?/i.test(configured)) {
-            return "";
-        }
-        return configured.replace(/\/+$/, "");
-    }
+const API_URL = String(
+    import.meta.env.VITE_API_URL || (import.meta.env.DEV ? "http://localhost:3000" : "")
+).trim().replace(/\/+$/, "");
 
-    // Local dev fallback
-    if (typeof window !== "undefined" && window.location.hostname === "localhost") {
-        return "http://localhost:3000";
-    }
-
-    // Production default: same-origin (works if you proxy /api to backend)
-    return "";
-};
-
-axios.defaults.baseURL = import.meta.env.VITE_API_URL;
+axios.defaults.baseURL = API_URL;
 
 const AppContext = createContext();
 
@@ -68,8 +53,7 @@ export const AppContextProvider = ({ children }) => {
             }
 
             if (isNetworkError) {
-                const baseURL = axios.defaults.baseURL || "(same-origin)";
-                toast.error(`Backend not reachable (API base: ${baseURL}).`);
+                toast.error("Unable to connect to the server. Please try again.");
             } else {
                 toast.error(error.response?.data?.message || error.message);
             }
