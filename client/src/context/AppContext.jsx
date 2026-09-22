@@ -4,7 +4,13 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import toast from "react-hot-toast";
 
-axios.defaults.baseURL = import.meta.env.VITE_SERVER_URL || "http://localhost:3000";
+const API_URL = String(
+    import.meta.env.VITE_API_URL ||
+    import.meta.env.VITE_SERVER_URL ||
+    (import.meta.env.DEV ? "http://localhost:3000" : "")
+).trim().replace(/\/+$/, "");
+
+axios.defaults.baseURL = API_URL;
 
 const AppContext = createContext();
 
@@ -49,7 +55,7 @@ export const AppContextProvider = ({ children }) => {
             }
 
             if (isNetworkError) {
-                toast.error("Backend not reachable. Start it (QUICKGPT/start-backend.cmd) on http://localhost:3000.");
+                toast.error("Unable to connect to the server. Please try again.");
             } else {
                 toast.error(error.response?.data?.message || error.message);
             }

@@ -61,14 +61,7 @@ export const purchasePlan = async (req, res) =>{
              isPaid: false
         })
         // Create Stripe checkout session
-        const forwardedProto = req.headers["x-forwarded-proto"]?.split(",")[0]
-        const protocol = forwardedProto || req.protocol
-        const hostBaseUrl = normalizeBaseUrl(`${protocol}://${req.get("host")}`)
-
-        const clientBaseUrl =
-            normalizeBaseUrl(process.env.CLIENT_URL) ||
-            normalizeBaseUrl(req.headers.origin) ||
-            hostBaseUrl
+        const clientBaseUrl = normalizeBaseUrl(process.env.CLIENT_URL)
 
         if (!clientBaseUrl) {
             return res.json({ success: false, message: "CLIENT_URL is not configured" })

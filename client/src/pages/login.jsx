@@ -24,7 +24,7 @@ const Login = () => {
       }
     } catch (error) {
       if (!error?.response) {
-        toast.error("Backend not reachable. Start it (QUICKGPT/start-backend.cmd) on http://localhost:3000.");
+        toast.error("Unable to connect to the server. Please try again.");
       } else {
         toast.error(error.response?.data?.message || error.message);
       }

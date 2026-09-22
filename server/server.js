@@ -15,14 +15,19 @@ import User from "./models/User.js"
 const app = express()
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY)
 
-connectDB()
-
 // Stripe Webhook Route
 app.post("/api/stripe", express.raw({type: "application/json"}), stripeWebhooks)
 
 
 // Middleware
-app.use(cors())
+app.use(cors({
+    origin: [
+        "http://localhost:5173",
+        process.env.CLIENT_URL
+    ].filter(Boolean),
+    credentials: true
+}))
+
 app.use(express.json())
 
 // Routes
@@ -33,9 +38,12 @@ app.use("/api/message",messageRouter)
 app.use("/api/credit", creditRouter)
 
 // Stripe success/cancel fallbacks (in case Checkout is configured to return to backend)
-const clientBaseUrl = (process.env.CLIENT_URL || "http://localhost:5173").replace(/\/+$/, "")
+const clientBaseUrl = (process.env.CLIENT_URL || "").trim().replace(/\/+$/, "")
 
 app.get("/payment-cancelled", (req, res) => {
+    if (!clientBaseUrl) {
+        return res.status(500).send("CLIENT_URL is not configured")
+    }
     res.redirect(`${clientBaseUrl}/credits?checkout=cancelled`)
 })
 
@@ -65,10 +73,22 @@ app.get("/loading", async (req, res) => {
     qs.set("checkout", String(checkout))
     if (sessionId) qs.set("session_id", String(sessionId))
 
+    if (!clientBaseUrl) {
+        return res.status(500).send("CLIENT_URL is not configured")
+    }
+
     res.redirect(`${clientBaseUrl}/loading?${qs.toString()}`)
 })
 const PORT = process.env.PORT || 3000
 
-app.listen(PORT,()=>{
-    console.log(`Server is running on port ${PORT}`)
+const start = async () => {
+    await connectDB()
+    app.listen(PORT, () => {
+        console.log(`Server is running on port ${PORT}`)
+    })
+}
+
+start().catch((error) => {
+    console.error("Failed to start server:", error?.message || error)
+    process.exit(1)
 })
